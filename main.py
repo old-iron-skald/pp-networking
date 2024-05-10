@@ -26,16 +26,75 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         return json.loads(self.rfile.read(content_length).decode('utf-8'))  # <--- Gets the data itself
 
     def do_GET(self):
-        self._set_response(418)
+        if self.path == '/reset':
+            USERS_LIST.clear()
+            USERS_LIST.append({
+                "id": 1,
+                "username": "theUser",
+                "firstName": "John",
+                "lastName": "James",
+                "email": "john@email.com",
+                "password": "12345",
+            })
+            self._set_response(200, USERS_LIST)
+        elif self.path == '/users':
+            self._set_response(200, USERS_LIST)
+        elif self.path.startswith('/user/'):
+            username = self.path.split('/')[-1]
+            for user in USERS_LIST:
+                if user['username'] == username:
+                    self._set_response(200, user)
+                    return
+            self._set_response(400, {"Error": "User not found"})
 
     def do_POST(self):
-        self._set_response(418)
+        if self.path == '/user':
+            try:
+                request_data = self._pars_body()
+                if isinstance(request_data, dict):
+                    if any(request_data["id"] == user["id"] for user in USERS_LIST):
+                        self._set_response(400, {})
+                        return
+                    USERS_LIST.append(request_data)
+                    self._set_response(201, request_data)
+                elif isinstance(request_data, list):
+                    for item in request_data:
+                        if any(item["id"] == user["id"] for user in USERS_LIST):
+                            self._set_response(400, {})
+                            return
+                    USERS_LIST.extend(request_data)
+                    self._set_response(201, request_data)
+                else:
+                    self._set_response(400, {})
+            except json.JSONDecodeError:
+                self._set_response(400, {})
 
     def do_PUT(self):
-        self._set_response(418)
+        if self.path.startswith('/user/'):
+            user_id = int(self.path.split('/')[-1])
+            try:
+                request_data = self._pars_body()
+                if all(key in request_data for key in ["username", "firstName", "lastName", "email", "password"]):
+                    for user in USERS_LIST:
+                        if user["id"] == user_id:
+                            user.update(request_data)
+                            self._set_response(200, user)
+                            return
+                    self._set_response(404, {"Error": "User not found"})
+                else:
+                    self._set_response(400, {"Error": "not valid request data"})
+            except json.JSONDecodeError:
+                self._set_response(400, {})
 
     def do_DELETE(self):
-        self._set_response(418)
+        if self.path.startswith('/user/'):
+            user_id = int(self.path.split('/')[-1])
+            for i, user in enumerate(USERS_LIST):
+                if user["id"] == user_id:
+                    del USERS_LIST[i]
+                    self._set_response(200, {})
+                    return
+            self._set_response(404, {"Error": "User not found"})
 
 
 def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, host='localhost', port=8000):
