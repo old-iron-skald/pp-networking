@@ -25,7 +25,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
         return json.loads(self.rfile.read(content_length).decode('utf-8'))  # <--- Gets the data itself
 
-     def do_GET(self):
+    def do_GET(self):
         if self.path == '/reset':
             USERS_LIST.clear()
             USERS_LIST.append({
