@@ -25,7 +25,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])  # <--- Gets the size of data
         return json.loads(self.rfile.read(content_length).decode('utf-8'))  # <--- Gets the data itself
 
-    def do_GET(self):
+     def do_GET(self):
         if self.path == '/reset':
             USERS_LIST.clear()
             USERS_LIST.append({
@@ -45,7 +45,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                 if user['username'] == username:
                     self._set_response(200, user)
                     return
-            self._set_response(400, {"Error": "User not found"})
+            self._set_response(404, {"Error": "User not found"})
 
     def do_POST(self):
         if self.path == '/user':
@@ -56,7 +56,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                         self._set_response(400, {"Error": "Missing 'id' in request"})
                         return
                     if any(request_data["id"] == user["id"] for user in USERS_LIST):
-                        self._set_response(400, {})
+                        self._set_response(409, {})
                         return
                     USERS_LIST.append(request_data)
                     self._set_response(201, request_data)
@@ -66,7 +66,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                             self._set_response(400, {"Error": "Missing 'id' in request"})
                             return
                         if any(item["id"] == user["id"] for user in USERS_LIST):
-                            self._set_response(400, {})
+                            self._set_response(409, {})
                             return
                     USERS_LIST.extend(request_data)
                     self._set_response(201, request_data)
@@ -74,7 +74,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     self._set_response(400, {})
             except json.JSONDecodeError:
                 self._set_response(400, {})
-
 
     def do_PUT(self):
         if self.path.startswith('/user/'):
