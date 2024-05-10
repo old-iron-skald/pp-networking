@@ -52,6 +52,9 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             try:
                 request_data = self._pars_body()
                 if isinstance(request_data, dict):
+                    if 'id' not in request_data:
+                        self._set_response(400, {"Error": "Missing 'id' in request"})
+                        return
                     if any(request_data["id"] == user["id"] for user in USERS_LIST):
                         self._set_response(400, {})
                         return
@@ -59,6 +62,9 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     self._set_response(201, request_data)
                 elif isinstance(request_data, list):
                     for item in request_data:
+                        if 'id' not in item:
+                            self._set_response(400, {"Error": "Missing 'id' in request"})
+                            return
                         if any(item["id"] == user["id"] for user in USERS_LIST):
                             self._set_response(400, {})
                             return
@@ -68,6 +74,7 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     self._set_response(400, {})
             except json.JSONDecodeError:
                 self._set_response(400, {})
+
 
     def do_PUT(self):
         if self.path.startswith('/user/'):
