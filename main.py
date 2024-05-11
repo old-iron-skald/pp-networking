@@ -104,7 +104,6 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
                     return
             self._set_response(404, {"error": "User not found"})
 
-
 def run(server_class=HTTPServer, handler_class=SimpleHTTPRequestHandler, host='localhost', port=8000):
     server_address = (host, port)
     httpd = server_class(server_address, handler_class)
